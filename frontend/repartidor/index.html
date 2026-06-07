@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BookTrack — Consultar Pedido</title>
+  <link rel="stylesheet" href="../assets/css/booktrack.css">
+</head>
+<body>
+
+<div class="topbar">
+  <span class="logo">BOOKTRACK</span>
+  <span class="badge">Portal Cliente</span>
+  <a href="../../index.html" style="margin-left:auto; color:var(--text-muted); font-size:13px; text-decoration:none;">← Volver</a>
+</div>
+
+<div class="main" style="max-width:600px;">
+
+  <div class="card">
+    <div class="card-title">🔍 Consultar tu Pedido</div>
+    <div class="form-group">
+      <label>ID de Seguimiento</label>
+      <input type="text" id="idConsulta" placeholder="Ej: BT-XXXXXXXX" style="text-transform:uppercase; font-size:16px; letter-spacing:2px;">
+    </div>
+    <button class="btn btn-green" onclick="consultarPedido()">Consultar Estado</button>
+    <div class="alert alert-error" id="alertError"></div>
+  </div>
+
+  <div id="resultado" style="display:none;">
+
+    <div class="card">
+      <div class="card-title">📦 Tu Pedido</div>
+      <div style="display:grid; gap:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="color:var(--text-muted); font-size:12px;">ID DE SEGUIMIENTO</span>
+          <strong id="resId" style="color:var(--amber); font-size:15px; letter-spacing:2px;"></strong>
+        </div>
+        <div style="border-top:1px solid var(--border); padding-top:14px; display:grid; gap:10px;">
+          <div class="grid-2">
+            <div><span style="color:var(--text-muted); font-size:11px; display:block; margin-bottom:4px;">CLIENTE</span><span id="resNombre"></span></div>
+            <div><span style="color:var(--text-muted); font-size:11px; display:block; margin-bottom:4px;">MONTO</span><span id="resMonto" style="color:var(--green); font-weight:600;"></span></div>
+          </div>
+          <div><span style="color:var(--text-muted); font-size:11px; display:block; margin-bottom:4px;">LIBRO(S)</span><span id="resLibros"></span></div>
+          <div><span style="color:var(--text-muted); font-size:11px; display:block; margin-bottom:4px;">DIRECCIÓN</span><span id="resDireccion" style="color:var(--amber);"></span></div>
+          <div><span style="color:var(--text-muted); font-size:11px; display:block; margin-bottom:4px;">FECHA</span><span id="resFecha"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📍 Estado de tu Entrega</div>
+      <div class="timeline" id="timeline"></div>
+      <div id="mensajeEstado" style="text-align:center; margin-top:16px; font-size:14px; font-weight:600;"></div>
+    </div>
+
+    <div class="card" id="cardRepartidor" style="display:none;">
+      <div class="card-title">🛵 Tu Repartidor</div>
+      <div class="grid-2">
+        <div>
+          <span style="color:var(--text-muted); font-size:11px; display:block; margin-bottom:4px;">NOMBRE</span>
+          <span id="resRepNombre" style="font-weight:600;"></span>
+        </div>
+        <div>
+          <span style="color:var(--text-muted); font-size:11px; display:block; margin-bottom:4px;">VEHÍCULO</span>
+          <span id="resRepVehiculo"></span>
+        </div>
+        <div>
+          <span style="color:var(--text-muted); font-size:11px; display:block; margin-bottom:4px;">PLACA</span>
+          <span id="resRepPlaca" style="color:var(--amber); font-weight:600; letter-spacing:2px;"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="cardIncidencia" style="display:none; border-color:var(--red);">
+      <div class="card-title" style="color:var(--red);">⚠ Aviso de Retraso</div>
+      <p id="resIncidencia" style="color:var(--text); font-size:14px;"></p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const estados = ['Preparando', 'En Ruta', 'Por Llegar', 'Entregado'];
+  const iconos  = ['📦', '🛵', '📍', '✅'];
+  const mensajes = {
+    'Preparando': '⏳ Tu pedido está siendo preparado en la librería.',
+    'En Ruta':    '🛵 Tu pedido está en camino. ¡Pronto llegará!',
+    'Por Llegar': '📍 Tu repartidor está cerca. ¡Prepárate para recibirlo!',
+    'Entregado':  '✅ ¡Tu pedido fue entregado exitosamente! Gracias por tu compra.'
+  };
+
+  function consultarPedido() {
+    const id = document.getElementById('idConsulta').value.trim().toUpperCase();
+    const pedidos = JSON.parse(localStorage.getItem('bt_pedidos') || '[]');
+    const pedido = pedidos.find(p => p.id === id);
+
+    if (!pedido) {
+      document.getElementById('alertError').textContent = '⚠ ID no encontrado. Verifica el código que te envió la librería.';
+      document.getElementById('alertError').className = 'alert alert-error show';
+      document.getElementById('resultado').style.display = 'none';
+      return;
+    }
+
+    document.getElementById('alertError').className = 'alert';
+    document.getElementById('resultado').style.display = 'block';
+
+    document.getElementById('resId').textContent       = pedido.id;
+    document.getElementById('resNombre').textContent   = pedido.nombre;
+    document.getElementById('resMonto').textContent    = '$' + pedido.monto.toFixed(2);
+    document.getElementById('resLibros').textContent   = pedido.libros;
+    document.getElementById('resDireccion').textContent = pedido.direccion;
+    document.getElementById('resFecha').textContent    = pedido.fecha;
+
+    // Timeline
+    const idx = estados.indexOf(pedido.estado);
+    document.getElementById('timeline').innerHTML = estados.map((e, i) => `
+      <div class="tl-step ${i < idx ? 'done' : i === idx ? 'active' : ''}">
+        <div class="tl-dot">${i < idx ? '✔' : iconos[i]}</div>
+        <div class="tl-label">${e}</div>
+      </div>
+    `).join('');
+
+    document.getElementById('mensajeEstado').textContent = mensajes[pedido.estado];
+    document.getElementById('mensajeEstado').style.color = pedido.estado === 'Entregado' ? 'var(--green)' : 'var(--amber)';
+
+    // Repartidor
+    if (pedido.repartidor) {
+      document.getElementById('cardRepartidor').style.display = 'block';
+      document.getElementById('resRepNombre').textContent   = pedido.repartidor.nombre;
+      document.getElementById('resRepVehiculo').textContent = pedido.repartidor.vehiculo;
+      document.getElementById('resRepPlaca').textContent    = pedido.repartidor.placa;
+    } else {
+      document.getElementById('cardRepartidor').style.display = 'none';
+    }
+
+    // Incidencia
+    if (pedido.incidencia) {
+      document.getElementById('cardIncidencia').style.display = 'block';
+      document.getElementById('resIncidencia').textContent = pedido.incidencia;
+    } else {
+      document.getElementById('cardIncidencia').style.display = 'none';
+    }
+  }
+</script>
+</body>
+</html>

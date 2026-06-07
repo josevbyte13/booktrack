@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BookTrack — Empleado</title>
+  <link rel="stylesheet" href="../assets/css/booktrack.css">
+</head>
+<body>
+
+<div class="topbar">
+  <span class="logo">BOOKTRACK</span>
+  <span class="badge">Panel Empleado</span>
+  <a href="../../index.html" style="margin-left:auto; color:var(--text-muted); font-size:13px; text-decoration:none;">← Volver</a>
+</div>
+
+<div class="main">
+
+  <!-- Crear Pedido -->
+  <div class="card">
+    <div class="card-title">📦 Nuevo Pedido</div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Nombre del Cliente</label>
+        <input type="text" id="nombre" placeholder="Ej: María González">
+      </div>
+      <div class="form-group">
+        <label>Teléfono</label>
+        <input type="text" id="telefono" placeholder="Ej: 0412-5551234">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Dirección de Entrega</label>
+      <input type="text" id="direccion" placeholder="Ej: Av. Principal, Urb. Las Mercedes, Caracas">
+    </div>
+    <div class="form-group">
+      <label>Libro(s)</label>
+      <input type="text" id="libros" placeholder="Ej: Cien Años de Soledad, El Principito">
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Monto Total ($)</label>
+        <input type="number" id="monto" placeholder="Ej: 25.00">
+      </div>
+      <div class="form-group">
+        <label>Repartidor</label>
+        <select id="repartidor">
+          <option value="">Seleccionar repartidor...</option>
+          <option value="Carlos Mendoza|Moto Honda CB|AB123CD">Carlos Mendoza — Moto Honda CB</option>
+          <option value="Luis García|Moto Yamaha|XY456ZW">Luis García — Moto Yamaha</option>
+          <option value="Pedro Rojas|Carro Corolla|MN789QR">Pedro Rojas — Carro Corolla</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-amber" onclick="crearPedido()">✔ Generar Pedido y ID de Seguimiento</button>
+    <div class="alert alert-success" id="alertCrear"></div>
+  </div>
+
+  <!-- Pedidos Activos -->
+  <div class="card">
+    <div class="card-title">📋 Pedidos Activos</div>
+    <table>
+      <thead>
+        <tr>
+          <th>ID Seguimiento</th>
+          <th>Cliente</th>
+          <th>Libro(s)</th>
+          <th>Monto</th>
+          <th>Estado</th>
+          <th>Repartidor</th>
+        </tr>
+      </thead>
+      <tbody id="tablaPedidos">
+        <tr><td colspan="6" style="color:var(--text-muted); text-align:center; padding:20px;">No hay pedidos aún.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+  // Base de datos en memoria
+  let pedidos = JSON.parse(localStorage.getItem('bt_pedidos') || '[]');
+
+  function generarID() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let id = 'BT-';
+    for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)];
+    return id;
+  }
+
+  function crearPedido() {
+    const nombre    = document.getElementById('nombre').value.trim();
+    const telefono  = document.getElementById('telefono').value.trim();
+    const direccion = document.getElementById('direccion').value.trim();
+    const libros    = document.getElementById('libros').value.trim();
+    const monto     = document.getElementById('monto').value.trim();
+    const repVal    = document.getElementById('repartidor').value;
+
+    if (!nombre || !telefono || !direccion || !libros || !monto) {
+      mostrarAlerta('alertCrear', '⚠ Completa todos los campos.', 'error'); return;
+    }
+
+    const rep = repVal ? repVal.split('|') : null;
+    const pedido = {
+      id: generarID(),
+      nombre, telefono, direccion, libros,
+      monto: parseFloat(monto),
+      estado: 'Preparando',
+      repartidor: rep ? { nombre: rep[0], vehiculo: rep[1], placa: rep[2] } : null,
+      fecha: new Date().toLocaleString('es-VE'),
+      incidencia: ''
+    };
+
+    pedidos.push(pedido);
+    localStorage.setItem('bt_pedidos', JSON.stringify(pedidos));
+    mostrarAlerta('alertCrear', `✔ Pedido creado. ID de Seguimiento: <strong>${pedido.id}</strong> — Envíalo al cliente.`, 'success');
+    limpiarForm();
+    renderTabla();
+  }
+
+  function limpiarForm() {
+    ['nombre','telefono','direccion','libros','monto'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('repartidor').value = '';
+  }
+
+  function renderTabla() {
+    const tbody = document.getElementById('tablaPedidos');
+    if (pedidos.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text-muted); text-align:center; padding:20px;">No hay pedidos aún.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = pedidos.map(p => `
+      <tr>
+        <td><strong style="color:var(--amber)">${p.id}</strong></td>
+        <td>${p.nombre}</td>
+        <td>${p.libros}</td>
+        <td>$${p.monto.toFixed(2)}</td>
+        <td><span class="status status-${p.estado === 'Preparando' ? 'preparando' : p.estado === 'En Ruta' ? 'ruta' : p.estado === 'Por Llegar' ? 'llegar' : 'entregado'}">${p.estado}</span></td>
+        <td>${p.repartidor ? p.repartidor.nombre : 'Sin asignar'}</td>
+      </tr>
+    `).join('');
+  }
+
+  function mostrarAlerta(id, msg, tipo) {
+    const el = document.getElementById(id);
+    el.innerHTML = msg;
+    el.className = `alert alert-${tipo} show`;
+  }
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  renderTabla();
+</script>
+</body>
+</html>
