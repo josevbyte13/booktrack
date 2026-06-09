@@ -3,9 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BookTrack</title>
+  <title>BookTrack — El Mundo del Libro</title>
   <link rel="stylesheet" href="frontend/assets/css/booktrack.css">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;600&display=swap');
+
+    body { overflow-x: hidden; }
+
     .hero {
       display: flex;
       flex-direction: column;
@@ -14,44 +18,129 @@
       min-height: 100vh;
       text-align: center;
       padding: 40px 20px;
+      position: relative;
+      background: radial-gradient(ellipse at top, #1a1200 0%, #0d0d0d 60%);
     }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 40px,
+        rgba(245,166,35,0.03) 40px, rgba(245,166,35,0.03) 41px
+      ),
+      repeating-linear-gradient(
+        90deg, transparent, transparent 40px,
+        rgba(245,166,35,0.03) 40px, rgba(245,166,35,0.03) 41px
+      );
+      pointer-events: none;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+
+    .brand-icon {
+      width: 56px; height: 56px;
+      background: var(--amber);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+    }
+
     .hero-title {
-      font-family: var(--font-head);
-      font-size: 6rem;
-      letter-spacing: 8px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 7rem;
+      letter-spacing: 10px;
       color: var(--amber);
       line-height: 1;
-      margin-bottom: 12px;
+      text-shadow: 0 0 80px rgba(245,166,35,0.3);
     }
+
+    .hero-client {
+      font-size: 12px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
     .hero-sub {
       color: var(--text-muted);
-      font-size: 14px;
+      font-size: 13px;
       letter-spacing: 2px;
       text-transform: uppercase;
       margin-bottom: 60px;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 24px;
     }
+
     .roles {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 20px;
-      max-width: 700px;
+      max-width: 780px;
       width: 100%;
     }
+
     .role-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 32px 20px;
+      padding: 36px 24px;
       text-decoration: none;
       color: var(--text);
-      transition: all .25s;
-      cursor: pointer;
+      transition: all .3s;
+      position: relative;
+      overflow: hidden;
     }
-    .role-card:hover { transform: translateY(-4px); border-color: var(--color); }
-    .role-icon { font-size: 2.5rem; margin-bottom: 14px; }
-    .role-name { font-family: var(--font-head); font-size: 1.4rem; letter-spacing: 2px; margin-bottom: 8px; }
-    .role-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
-    .version { margin-top: 60px; color: var(--text-muted); font-size: 11px; letter-spacing: 2px; }
+
+    .role-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transition: transform .3s;
+    }
+
+    .role-card:hover::before { transform: scaleX(1); }
+    .role-card:hover { transform: translateY(-6px); border-color: var(--accent); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+
+    .role-icon { font-size: 3rem; margin-bottom: 16px; display: block; }
+    .role-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 3px; margin-bottom: 10px; color: var(--accent); }
+    .role-desc { font-size: 12px; color: var(--text-muted); line-height: 1.7; }
+
+    .role-arrow {
+      display: inline-block;
+      margin-top: 20px;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent);
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: all .3s;
+    }
+    .role-card:hover .role-arrow { opacity: 1; transform: translateX(0); }
+
+    .footer {
+      margin-top: 60px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      color: var(--text-muted);
+      font-size: 11px;
+      letter-spacing: 2px;
+    }
+    .footer span { width: 4px; height: 4px; background: var(--border); border-radius: 50%; display: inline-block; }
+
     @media (max-width: 640px) {
       .hero-title { font-size: 4rem; }
       .roles { grid-template-columns: 1fr; }
@@ -60,28 +149,37 @@
 </head>
 <body>
 <div class="hero">
-  <div class="hero-title">BOOKTRACK</div>
-  <div class="hero-sub">Sistema de Gestión de Entregas — El Mundo del Libro · Caracas</div>
+  <div class="brand">
+      <img src="frontend/assets/img/logodeemp.jpeg" alt="BookTrack Logo" style="width:200px; margin-bottom:10px; border-radius:16px;" border: 2px solid var(--amber);">
+    </div>
+    <div class="hero-client">El Mundo del Libro · Caracas</div>
+    <div class="hero-title">BOOKTRACK</div>
+  <div class="hero-sub">Sistema de Gestión de Entregas en Tiempo Real</div>
 
   <div class="roles">
-    <a class="role-card" href="frontend/empleado/index.html" style="--color: var(--amber);">
-      <div class="role-icon">👤</div>
-      <div class="role-name" style="color:var(--amber);">Empleado</div>
-      <div class="role-desc">Registra ventas, genera IDs de seguimiento y asigna repartidores.</div>
+    <a class="role-card" href="frontend/empleado/index.html" style="--accent: var(--amber);">
+      <span class="role-icon">👤</span>
+      <div class="role-name">Empleado</div>
+      <div class="role-desc">Registra ventas, genera IDs de seguimiento únicos y asigna repartidores disponibles.</div>
+      <div class="role-arrow">Ingresar →</div>
     </a>
-    <a class="role-card" href="frontend/repartidor/index.html" style="--color: var(--blue);">
-      <div class="role-icon">🛵</div>
-      <div class="role-name" style="color:var(--blue);">Repartidor</div>
-      <div class="role-desc">Actualiza el estado del pedido y reporta incidencias en ruta.</div>
+    <a class="role-card" href="frontend/repartidor/index.html" style="--accent: var(--blue);">
+      <span class="role-icon">🛵</span>
+      <div class="role-name">Repartidor</div>
+      <div class="role-desc">Actualiza el estado del pedido en ruta y reporta incidencias de tráfico o clima.</div>
+      <div class="role-arrow">Ingresar →</div>
     </a>
-    <a class="role-card" href="frontend/cliente/index.html" style="--color: var(--green);">
-      <div class="role-icon">📦</div>
-      <div class="role-name" style="color:var(--green);">Cliente</div>
-      <div class="role-desc">Consulta el estado de tu pedido con tu ID de seguimiento.</div>
+    <a class="role-card" href="frontend/cliente/index.html" style="--accent: var(--green);">
+      <span class="role-icon">📦</span>
+      <div class="role-name">Cliente</div>
+      <div class="role-desc">Consulta el estado de tu pedido con tu ID de seguimiento. Sin registro requerido.</div>
+      <div class="role-arrow">Consultar →</div>
     </a>
   </div>
 
-  <div class="version">BOOKTRACK v1.0 · POO Java · 2026</div>
+  <div class="footer">
+    <span></span> BOOKTRACK v1.0 <span></span> POO Java <span></span> 2026 <span></span>
+  </div>
 </div>
 </body>
 </html>
