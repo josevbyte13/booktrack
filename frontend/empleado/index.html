@@ -3,159 +3,151 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BookTrack — Repartidor</title>
+  <title>BookTrack — Empleado</title>
   <link rel="stylesheet" href="../assets/css/booktrack.css">
 </head>
 <body>
 
 <div class="topbar">
   <span class="logo">BOOKTRACK</span>
-  <span class="badge">Panel Repartidor</span>
+  <span class="badge">Panel Empleado</span>
   <a href="../../index.html" style="margin-left:auto; color:var(--text-muted); font-size:13px; text-decoration:none;">← Volver</a>
 </div>
 
 <div class="main">
 
   <div class="card">
-    <div class="card-title">🛵 Buscar Pedido</div>
+    <div class="card-title">📦 Nuevo Pedido</div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Nombre del Cliente</label>
+        <input type="text" id="nombre" placeholder="Ej: María González">
+      </div>
+      <div class="form-group">
+        <label>Teléfono</label>
+        <input type="text" id="telefono" placeholder="Ej: 0412-5551234">
+      </div>
+    </div>
     <div class="form-group">
-      <label>ID de Seguimiento</label>
-      <input type="text" id="idBuscar" placeholder="Ej: BT-XXXXXXXX" style="text-transform:uppercase;">
+      <label>Dirección de Entrega</label>
+      <input type="text" id="direccion" placeholder="Ej: Av. Principal, Urb. Las Mercedes, Caracas">
     </div>
-    <button class="btn btn-blue" onclick="buscarPedido()">🔍 Buscar Pedido</button>
-    <div class="alert alert-error" id="alertBuscar"></div>
-  </div>
-
-  <div id="panelPedido" style="display:none;">
-
-    <div class="card">
-      <div class="card-title">📦 Detalle del Pedido</div>
-      <div class="grid-2">
-        <div>
-          <label>Cliente</label>
-          <p id="detNombre" style="color:var(--text); margin-bottom:12px;"></p>
-          <label>Teléfono</label>
-          <p id="detTelefono" style="color:var(--text); margin-bottom:12px;"></p>
-          <label>Libro(s)</label>
-          <p id="detLibros" style="color:var(--text);"></p>
-        </div>
-        <div>
-          <label>Dirección</label>
-          <p id="detDireccion" style="color:var(--amber); margin-bottom:12px; font-weight:600;"></p>
-          <label>Monto</label>
-          <p id="detMonto" style="color:var(--text); margin-bottom:12px;"></p>
-          <label>Estado Actual</label>
-          <p id="detEstado"></p>
-        </div>
+    <div class="form-group">
+      <label>Libro(s)</label>
+      <input type="text" id="libros" placeholder="Ej: Cien Años de Soledad, El Principito">
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Monto Total ($)</label>
+        <input type="number" id="monto" placeholder="Ej: 25.00">
+      </div>
+      <div class="form-group">
+        <label>Repartidor</label>
+        <select id="repartidor">
+          <option value="">Seleccionar repartidor...</option>
+          <option value="Carlos Mendoza|Moto Honda CB|AB123CD">Carlos Mendoza — Moto Honda CB</option>
+          <option value="Luis García|Moto Yamaha|XY456ZW">Luis García — Moto Yamaha</option>
+          <option value="Pedro Rojas|Carro Corolla|MN789QR">Pedro Rojas — Carro Corolla</option>
+        </select>
       </div>
     </div>
-
-    <div class="card">
-      <div class="card-title">🔄 Actualizar Estado</div>
-      <div class="timeline" id="timeline"></div>
-      <button class="btn btn-green" onclick="avanzarEstado()" id="btnAvanzar">✔ Confirmar Siguiente Estado</button>
-      <div class="alert" id="alertEstado"></div>
-    </div>
-
-    <div class="card" style="border-color: var(--red);">
-      <div class="card-title" style="color:var(--red);">⚠ Reportar Incidencia</div>
-      <div class="grid-2">
-        <button class="btn btn-red" onclick="reportar('Retraso por tráfico en autopista de Caracas.')">🚗 Tráfico en Autopista</button>
-        <button class="btn btn-red" onclick="reportar('Retraso por lluvia fuerte. Esperando que escampe.')">🌧 Lluvia Fuerte</button>
-        <button class="btn btn-red" onclick="reportar('Inconveniente con el vehículo. Gestionando solución.')">🔧 Problema con Vehículo</button>
-        <button class="btn btn-ghost" onclick="reportarOtra()">✏ Otra Incidencia</button>
-      </div>
-      <div class="alert" id="alertIncidencia"></div>
-    </div>
-
+    <button class="btn btn-amber" onclick="crearPedido()">✔ Generar Pedido y ID de Seguimiento</button>
+    <div class="alert" id="alertCrear"></div>
   </div>
+
+  <div class="card">
+    <div class="card-title">📋 Pedidos Activos</div>
+    <table>
+      <thead>
+        <tr>
+          <th>ID Seguimiento</th>
+          <th>Cliente</th>
+          <th>Libro(s)</th>
+          <th>Monto</th>
+          <th>Estado</th>
+          <th>Repartidor</th>
+        </tr>
+      </thead>
+      <tbody id="tablaPedidos">
+        <tr><td colspan="6" style="color:var(--text-muted); text-align:center; padding:20px;">No hay pedidos aún.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
 </div>
 
 <div id="toast"></div>
 
 <script>
   let pedidos = JSON.parse(localStorage.getItem('bt_pedidos') || '[]');
-  let pedidoActual = null;
-  const estados = ['Preparando', 'En Ruta', 'Por Llegar', 'Entregado'];
-  const iconos  = ['📦', '🛵', '📍', '✅'];
 
-  function buscarPedido() {
-    const id = document.getElementById('idBuscar').value.trim().toUpperCase();
-    pedidoActual = pedidos.find(p => p.id === id);
+  function generarID() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let id = 'BT-';
+    for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)];
+    return id;
+  }
 
-    if (!pedidoActual) {
-      document.getElementById('alertBuscar').textContent = '⚠ ID no encontrado. Verifica con el empleado.';
-      document.getElementById('alertBuscar').className = 'alert alert-error show';
-      document.getElementById('panelPedido').style.display = 'none';
-      return;
+  function crearPedido() {
+    const nombre    = document.getElementById('nombre').value.trim();
+    const telefono  = document.getElementById('telefono').value.trim();
+    const direccion = document.getElementById('direccion').value.trim();
+    const libros    = document.getElementById('libros').value.trim();
+    const monto     = document.getElementById('monto').value.trim();
+    const repVal    = document.getElementById('repartidor').value;
+
+    if (!nombre || !telefono || !direccion || !libros || !monto) {
+      mostrarAlerta('alertCrear', '⚠ Completa todos los campos.', 'error'); return;
     }
 
-    document.getElementById('alertBuscar').className = 'alert';
-    document.getElementById('panelPedido').style.display = 'block';
-    renderDetalle();
-    renderTimeline();
-  }
+    const rep = repVal ? repVal.split('|') : null;
+    const pedido = {
+      id: generarID(),
+      nombre, telefono, direccion, libros,
+      monto: parseFloat(monto),
+      estado: 'Preparando',
+      repartidor: rep ? { nombre: rep[0], vehiculo: rep[1], placa: rep[2] } : null,
+      fecha: new Date().toLocaleString('es-VE'),
+      incidencia: ''
+    };
 
-  function renderDetalle() {
-    document.getElementById('detNombre').textContent    = pedidoActual.nombre;
-    document.getElementById('detTelefono').textContent  = pedidoActual.telefono;
-    document.getElementById('detLibros').textContent    = pedidoActual.libros;
-    document.getElementById('detDireccion').textContent = pedidoActual.direccion;
-    document.getElementById('detMonto').textContent     = '$' + pedidoActual.monto.toFixed(2);
-    document.getElementById('detEstado').innerHTML      = `<span class="status status-${claseEstado(pedidoActual.estado)}">${pedidoActual.estado}</span>`;
-  }
-
-  function renderTimeline() {
-    const idx = estados.indexOf(pedidoActual.estado);
-    document.getElementById('timeline').innerHTML = estados.map((e, i) => `
-      <div class="tl-step ${i < idx ? 'done' : i === idx ? 'active' : ''}">
-        <div class="tl-dot">${i < idx ? '✔' : iconos[i]}</div>
-        <div class="tl-label">${e}</div>
-      </div>
-    `).join('');
-
-    const btnAvanzar = document.getElementById('btnAvanzar');
-    btnAvanzar.style.display = pedidoActual.estado === 'Entregado' ? 'none' : 'flex';
-  }
-
-  function avanzarEstado() {
-    const idx = estados.indexOf(pedidoActual.estado);
-    if (idx >= estados.length - 1) return;
-
-    pedidoActual.estado = estados[idx + 1];
-    pedidoActual.incidencia = '';
-    guardar();
-    renderDetalle();
-    renderTimeline();
-
-    const alerta = document.getElementById('alertEstado');
-    alerta.textContent = `✔ Estado actualizado a: ${pedidoActual.estado}`;
-    alerta.className = 'alert alert-success show';
-  }
-
-  function reportar(msg) {
-    if (!pedidoActual) return;
-    pedidoActual.incidencia = msg;
-    guardar();
-    const alerta = document.getElementById('alertIncidencia');
-    alerta.textContent = '✔ Incidencia reportada. El cliente podrá verla.';
-    alerta.className = 'alert alert-warning show';
-  }
-
-  function reportarOtra() {
-    const msg = prompt('Describe la incidencia:');
-    if (msg) reportar(msg);
-  }
-
-  function guardar() {
-    const idx = pedidos.findIndex(p => p.id === pedidoActual.id);
-    pedidos[idx] = pedidoActual;
+    pedidos.push(pedido);
     localStorage.setItem('bt_pedidos', JSON.stringify(pedidos));
+    mostrarAlerta('alertCrear', `✔ Pedido creado. ID: <strong>${pedido.id}</strong> — Envíalo al cliente.`, 'success');
+    limpiarForm();
+    renderTabla();
   }
 
-  function claseEstado(e) {
-    return e === 'Preparando' ? 'preparando' : e === 'En Ruta' ? 'ruta' : e === 'Por Llegar' ? 'llegar' : 'entregado';
+  function limpiarForm() {
+    ['nombre','telefono','direccion','libros','monto'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('repartidor').value = '';
   }
+
+  function renderTabla() {
+    const tbody = document.getElementById('tablaPedidos');
+    if (pedidos.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text-muted); text-align:center; padding:20px;">No hay pedidos aún.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = pedidos.map(p => `
+      <tr>
+        <td><strong style="color:var(--amber)">${p.id}</strong></td>
+        <td>${p.nombre}</td>
+        <td>${p.libros}</td>
+        <td>$${p.monto.toFixed(2)}</td>
+        <td><span class="status status-${p.estado === 'Preparando' ? 'preparando' : p.estado === 'En Ruta' ? 'ruta' : p.estado === 'Por Llegar' ? 'llegar' : 'entregado'}">${p.estado}</span></td>
+        <td>${p.repartidor ? p.repartidor.nombre : 'Sin asignar'}</td>
+      </tr>
+    `).join('');
+  }
+
+  function mostrarAlerta(id, msg, tipo) {
+    const el = document.getElementById(id);
+    el.innerHTML = msg;
+    el.className = `alert alert-${tipo} show`;
+  }
+
+  renderTabla();
 </script>
 </body>
 </html>
